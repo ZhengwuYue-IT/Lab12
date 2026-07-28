@@ -1,0 +1,51 @@
+edition: 3.0.0
+name: fit5032-lab9-alibaba-cloud-functions
+access: default
+
+vars:
+  region: cn-hangzhou
+
+resources:
+  countBooks:
+    component: fc3
+    props:
+      region: ${vars.region}
+      functionName: fit5032-lab9-count-books
+      description: Count books in JSON data for FIT5032 Assessed Lab 9
+      runtime: nodejs20
+      code: ./alibaba-functions/count-books
+      handler: index.handler
+      memorySize: 128
+      timeout: 15
+      internetAccess: true
+      triggers:
+        - triggerName: count-books-http
+          triggerType: http
+          qualifier: LATEST
+          triggerConfig:
+            authType: anonymous
+            disableURLInternet: false
+            methods:
+              - GET
+
+  bookInsights:
+    component: fc3
+    props:
+      region: ${vars.region}
+      functionName: fit5032-lab9-book-insights
+      description: Generate book insights from Firestore JSON data for FIT5032 Assessed Lab 9
+      runtime: nodejs20
+      code: ./alibaba-functions/book-insights
+      handler: index.handler
+      memorySize: 128
+      timeout: 15
+      internetAccess: true
+      triggers:
+        - triggerName: book-insights-http
+          triggerType: http
+          qualifier: LATEST
+          triggerConfig:
+            authType: anonymous
+            disableURLInternet: false
+            methods:
+              - POST

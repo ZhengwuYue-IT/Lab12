@@ -1,0 +1,8 @@
+[
+  { "isbn": 950, "name": "Archived Catalogue Sample" },
+  { "isbn": 1001, "name": "Vue Essentials" },
+  { "isbn": 1200, "name": "Firebase Foundations" },
+  { "isbn": 1500, "name": "Firestore in Practice - Updated" },
+  { "isbn": 1800, "name": "Accessible Web Design" },
+  { "isbn": 36668672, "name": "NoMash Library Lab 8" }
+]

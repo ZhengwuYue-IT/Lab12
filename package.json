@@ -1,0 +1,41 @@
+{
+  "name": "fit5032-lab11",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "test:unit": "vitest run --environment jsdom",
+    "verify": "npm run lint && npm run test:unit && npm run build",
+    "verify:production": "node scripts/verifyProduction.mjs",
+    "aliyun:verify": "s verify",
+    "aliyun:deploy": "s deploy -y",
+    "lint": "eslint . --ext .vue,.js,.jsx,.cjs,.mjs --no-fix --ignore-path .gitignore",
+    "lint:fix": "eslint . --ext .vue,.js,.jsx,.cjs,.mjs --fix --ignore-path .gitignore",
+    "format": "prettier --write src/"
+  },
+  "dependencies": {
+    "@primeuix/themes": "^2.0.3",
+    "axios": "^1.18.1",
+    "bootstrap": "^5.3.8",
+    "firebase": "^12.16.0",
+    "primevue": "^4.5.5",
+    "vue": "^3.5.39",
+    "vue-router": "^4.6.4"
+  },
+  "devDependencies": {
+    "@rushstack/eslint-patch": "^1.8.0",
+    "@serverless-devs/s": "^3.1.10",
+    "@vitejs/plugin-vue": "^6.0.8",
+    "@vue/eslint-config-prettier": "^9.0.0",
+    "eslint": "^8.57.0",
+    "eslint-plugin-vue": "^9.23.0",
+    "jsdom": "^29.1.1",
+    "prettier": "^3.2.5",
+    "vite": "^8.1.4",
+    "vite-plugin-vue-devtools": "^8.1.5",
+    "vitest": "^4.1.10"
+  }
+}
