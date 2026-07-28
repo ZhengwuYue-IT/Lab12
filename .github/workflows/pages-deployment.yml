@@ -1,0 +1,69 @@
+name: Verify and Deploy to Cloudflare Pages
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  deployments: write
+
+concurrency:
+  group: lab12-cloudflare-production
+  cancel-in-progress: false
+
+jobs:
+  verify-and-deploy:
+    name: Verify, build, deploy, and smoke test
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    environment:
+      name: production
+      url: ${{ steps.deploy.outputs.deployment-url }}
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v6
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version-file: .node-version
+          cache: npm
+
+      - name: Install locked dependencies
+        run: npm ci
+
+      - name: Validate required build configuration
+        env:
+          VITE_OPENWEATHER_API_KEY: ${{ secrets.VITE_OPENWEATHER_API_KEY }}
+        run: |
+          if [ -z "$VITE_OPENWEATHER_API_KEY" ]; then
+            echo "::error::VITE_OPENWEATHER_API_KEY is not configured"
+            exit 1
+          fi
+
+      - name: Run lint, unit tests, and production build
+        env:
+          VITE_OPENWEATHER_API_KEY: ${{ secrets.VITE_OPENWEATHER_API_KEY }}
+        run: npm run verify
+
+      - name: Audit production dependencies
+        run: npm audit --omit=dev --audit-level=high
+
+      - name: Deploy verified build to Cloudflare Pages
+        id: deploy
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          command: pages deploy dist --project-name=fit5032-lab12 --branch=main
+          gitHubToken: ${{ secrets.GITHUB_TOKEN }}
+          packageManager: npm
+
+      - name: Smoke test deployed routes
+        env:
+          LAB12_PRODUCTION_URL: ${{ steps.deploy.outputs.deployment-url }}
+        run: npm run verify:production

@@ -26,7 +26,7 @@ describe('Cloudflare Pages deployment contract', () => {
   it('remains a single static Vue project', () => {
     const packageJson = JSON.parse(readProjectFile('package.json'))
 
-    expect(packageJson.name).toBe('fit5032-lab11')
+    expect(packageJson.name).toBe('fit5032-lab12')
     expect(packageJson.scripts.start).toBeUndefined()
     expect(packageJson.dependencies.express).toBeUndefined()
   })

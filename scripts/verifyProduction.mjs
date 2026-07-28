@@ -1,7 +1,10 @@
 import process from 'node:process'
 
-const productionBaseUrl =
-  process.env.LAB11_PRODUCTION_URL || 'https://fit5032-lab11-1l0.pages.dev'
+const productionBaseUrl = process.env.LAB12_PRODUCTION_URL?.trim()
+
+if (!productionBaseUrl) {
+  throw new Error('LAB12_PRODUCTION_URL is required for production verification')
+}
 
 const assessedRoutes = ['/', '/WeatherCheck', '/CountBookAPI', '/GetAllBookAPI']
 
