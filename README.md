@@ -1,121 +1,126 @@
-# FIT5032 Assessed Lab 11 - Vue Deployment with Cloudflare Pages
+# FIT5032 Assessed Lab 12 - GitHub Actions CI/CD
 
-This independent Lab 11 repository extends the completed Lab 10 NoMash Library application and
-deploys the single Vue/Vite project to Cloudflare Pages. The public source remains in one GitHub
-repository, while Cloudflare's official Wrangler Direct Upload workflow publishes the verified
-`dist` build. The application retains the current-location and city weather page, the two local
-JSON API-style pages, and the earlier Firebase and cloud-function learning activities.
+[![Verify and Deploy to Cloudflare Pages](https://github.com/ZhengwuYue-IT/Lab12/actions/workflows/pages-deployment.yml/badge.svg)](https://github.com/ZhengwuYue-IT/Lab12/actions/workflows/pages-deployment.yml)
+
+This independent Lab 12 repository extends the completed Lab 11 NoMash Library application.
+It keeps the existing Vue functionality while adding a GitHub Actions continuous integration and
+deployment pipeline for Cloudflare Pages. The repository contains one Vue/Vite project, and all
+earlier Lab repositories remain unchanged.
 
 ## Assessed Deployment
 
-The deployed project uses the following production settings:
-
-| Setting | Value |
+| Item | Value |
 | --- | --- |
-| Cloudflare project | `fit5032-lab11` |
-| Deployment method | Wrangler Direct Upload |
-| Production branch metadata | `main` |
-| Local build command | `npm run build` |
-| Uploaded directory | `dist` |
-| Node version | `22.16.0` from `.node-version` |
-| Weather variable | `VITE_OPENWEATHER_API_KEY` from ignored `.env.local` at build time |
+| GitHub repository | `https://github.com/ZhengwuYue-IT/Lab12` |
+| GitHub workflow | `Verify and Deploy to Cloudflare Pages` |
+| Cloudflare project | `fit5032-lab12` |
+| Production branch | `main` |
+| Build output | `dist` |
+| Production URL | Pending the first verified GitHub Actions deployment |
 
-The API key and temporary Cloudflare deployment token are never committed. For this coursework
-architecture the OpenWeather key is supplied as a Vite build-time variable, so it is client-visible
-after compilation and should be rotated after the assessment if it is not intended for continued
-public use.
+The project uses Wrangler Direct Upload from GitHub Actions. It does not claim to use Cloudflare
+Git Integration.
 
-## Verified Deployment Result
+## Verified CI/CD Contract
 
-- Production: `https://fit5032-lab11-1l0.pages.dev`
-- Initial diagnostic deployment: omitted the production weather key and reproduced the expected
-  `OpenWeather is not configured` state.
-- Corrected production deployment: rebuilt with the ignored environment value and verified live
-  current-location and `Clayton, AU` weather in Celsius with the corresponding icon.
-- Cloudflare deployment history preserves both diagnostic and corrected deployments for assessment
-  traceability.
+Every push to `main`, and every manual `workflow_dispatch` run, performs these steps in order:
 
-## Production Routing and Geolocation
+1. Check out the exact commit.
+2. Use Node.js `22.16.0` and the npm cache.
+3. Install the locked dependency graph with `npm ci`.
+4. Confirm the OpenWeather build variable is present without printing its value.
+5. Run ESLint, all Vitest tests, and the Vite production build through `npm run verify`.
+6. Audit production dependencies at high severity.
+7. Deploy the verified `dist` directory to the `fit5032-lab12` Cloudflare Pages project.
+8. Smoke-test the exact deployment URL returned by Wrangler.
 
-- `public/_redirects` serves `index.html` for Vue Router history URLs such as `/WeatherCheck`.
-- `public/_headers` explicitly allows geolocation for the deployed application origin.
-- OpenWeather Direct Geocoding resolves city searches before Current Weather is requested with
-  `units=metric`.
-- Location denial or failure does not disable manual city search.
+Deployment is gated: Cloudflare is not called when linting, tests, the build, or the production
+dependency audit fails.
 
-## Assessed Routes
+## Required GitHub Actions Secrets
 
-| Route | Expected production result |
+The workflow references three repository secrets. Their values must never be committed:
+
+| Secret | Purpose |
 | --- | --- |
-| `/` | NoMash Library home page |
-| `/WeatherCheck` | Current-location and city weather in Celsius with an icon |
-| `/CountBookAPI` | 3 authors and 6 books as formatted JSON |
-| `/GetAllBookAPI` | All six famous works with title, year and author |
+| `CLOUDFLARE_API_TOKEN` | Least-privilege Cloudflare Pages deployment authentication |
+| `CLOUDFLARE_ACCOUNT_ID` | Selects the Cloudflare account containing the Pages project |
+| `VITE_OPENWEATHER_API_KEY` | Supplies the existing weather key during the Vite build |
+
+GitHub supplies `GITHUB_TOKEN` automatically with the workflow's explicit `contents: read` and
+`deployments: write` permissions. The live OpenWeather value remains client-visible after Vite
+compilation, so it is treated as a course API key rather than a server-side secret.
 
 ## Local Setup
 
-Install the locked dependencies:
+Requirements:
 
-```powershell
+- Node.js `22.16.0`
+- npm with lockfile support
+- an ignored `.env.local` containing the required local values
+
+Install and start the application:
+
+```bash
 npm ci
-```
-
-Copy `.env.example` to `.env.local` and add an active OpenWeather API key:
-
-```text
-VITE_OPENWEATHER_API_KEY=your_local_key
-```
-
-Start the development server:
-
-```powershell
 npm run dev
 ```
 
-Open `http://localhost:5173/WeatherCheck` and grant location permission when prompted.
+Copy `.env.example` to `.env.local` and replace only the placeholders needed for the activity.
+Never commit `.env.local`.
+
+## Application Routes
+
+| Route | Purpose |
+| --- | --- |
+| `/` | NoMash Library home page |
+| `/WeatherCheck` | Current-location and city weather in Celsius |
+| `/CountBookAPI` | Author and book totals as formatted JSON |
+| `/GetAllBookAPI` | All six book records as formatted JSON |
+
+Cloudflare Pages receives `public/_redirects`, so refreshing a Vue Router history URL resolves to
+the application shell. `public/_headers` permits self-origin geolocation on the HTTPS deployment.
 
 ## Verification
 
 Run the complete local gate:
 
-```powershell
+```bash
 npm run verify
 ```
 
-It runs ESLint, Vitest and the Vite production build. Automated coverage includes:
+Run the read-only production smoke test after a deployment:
 
-- catalogue totals and six flattened book records;
-- OpenWeather geocoding, coordinate requests, metric units and error handling;
-- the three assessed Lab 10 routes;
-- Cloudflare Node, SPA fallback, geolocation header and single-project configuration.
-
-Run the read-only production smoke gate:
-
-```powershell
-npm run verify:production
+```bash
+LAB12_PRODUCTION_URL=https://DEPLOYMENT_URL npm run verify:production
 ```
 
-It checks `/`, `/WeatherCheck`, `/CountBookAPI`, and `/GetAllBookAPI` for HTTP 200 responses,
-confirms the built JavaScript asset is available, and verifies the production
+The smoke test requires HTTP 200 for `/`, `/WeatherCheck`, `/CountBookAPI`,
+`/GetAllBookAPI`, and the current hashed JavaScript asset. It also checks the production
 `Permissions-Policy: geolocation=(self)` header.
 
-Production acceptance additionally checks direct route refreshes, real current-location weather,
-the assessed `Clayton, AU` search, mobile layout and a clean browser console.
+## Lab 12 Research Boundary
 
-## Repository and Evidence Boundary
+The assessed PDF contains the two required research answers:
 
-- Source repository: `https://github.com/ZhengwuYue-IT/Lab11`
-- Production URL: `https://fit5032-lab11-1l0.pages.dev`
-- LaTeX evidence and screenshots: stored outside this public repository
-- Local API keys and deployment tokens: stored only in ignored local files or transient process
-  environment variables
-- Previous Lab repositories: preserved unchanged
+- Time To First Byte (TTFB), including measurement and reduction strategies.
+- Hotlinking, including prevention controls and legitimate-sharing exceptions.
+
+The lab instructions state that these optimisation topics are theoretical. No unverified
+Hotlink Protection or custom-domain configuration is claimed in this repository.
+
+## Repository Boundary
+
+- Public source: this repository only.
+- LaTeX evidence and assessment screenshots: stored outside the public repository.
+- Local API values and deployment credentials: ignored local storage or GitHub Actions Secrets.
+- Previous Lab repositories and PDFs: preserved unchanged.
 
 ## References
 
-- [Cloudflare Pages - Deploy a Vue site](https://developers.cloudflare.com/pages/framework-guides/deploy-a-vue-site/)
-- [Cloudflare Pages - Direct Upload](https://developers.cloudflare.com/pages/get-started/direct-upload/)
-- [Cloudflare Wrangler - Pages commands](https://developers.cloudflare.com/workers/wrangler/commands/pages/)
-- [Cloudflare Pages - Serving Pages and SPA fallback](https://developers.cloudflare.com/pages/configuration/serving-pages/)
-- [OpenWeather Current Weather API](https://openweathermap.org/api/current)
-- [OpenWeather Geocoding API](https://openweathermap.org/api/geocoding-api)
+- [Cloudflare Pages - Direct Upload with continuous integration](https://developers.cloudflare.com/pages/how-to/use-direct-upload-with-continuous-integration/)
+- [Cloudflare Wrangler Action](https://github.com/cloudflare/wrangler-action)
+- [GitHub Actions - Secrets](https://docs.github.com/en/actions/concepts/security/secrets)
+- [web.dev - Time to First Byte](https://web.dev/articles/ttfb)
+- [web.dev - Optimize Time to First Byte](https://web.dev/articles/optimize-ttfb)
+- [Cloudflare - Hotlink Protection](https://developers.cloudflare.com/waf/tools/scrape-shield/hotlink-protection/)
