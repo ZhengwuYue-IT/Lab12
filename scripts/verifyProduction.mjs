@@ -1,4 +1,5 @@
 import process from 'node:process'
+import { fetchWithRetry } from './productionSmoke.mjs'
 
 const productionBaseUrl = process.env.LAB12_PRODUCTION_URL?.trim()
 
@@ -8,10 +9,18 @@ if (!productionBaseUrl) {
 
 const assessedRoutes = ['/', '/WeatherCheck', '/CountBookAPI', '/GetAllBookAPI']
 
+const fetchProduction = async (url) => {
+  const { response } = await fetchWithRetry(url, {
+    requestOptions: { redirect: 'error' },
+  })
+
+  return response
+}
+
 const routeResults = await Promise.all(
   assessedRoutes.map(async (route) => {
     const url = new URL(route, productionBaseUrl)
-    const response = await fetch(url, { redirect: 'error' })
+    const response = await fetchProduction(url)
     const body = await response.text()
 
     if (!response.ok) {
@@ -42,9 +51,9 @@ if (!assetPath) {
   throw new Error('The production HTML does not reference the built JavaScript asset')
 }
 
-const assetResponse = await fetch(new URL(assetPath, productionBaseUrl), {
-  redirect: 'error',
-})
+const assetResponse = await fetchProduction(
+  new URL(assetPath, productionBaseUrl),
+)
 
 if (!assetResponse.ok) {
   throw new Error(`The production JavaScript asset returned HTTP ${assetResponse.status}`)

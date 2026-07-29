@@ -16,7 +16,7 @@ earlier Lab repositories remain unchanged.
 | Cloudflare project | `fit5032-lab12` |
 | Production branch | `main` |
 | Build output | `dist` |
-| Production URL | Pending the first verified GitHub Actions deployment |
+| Production URL | [https://fit5032-lab12.pages.dev](https://fit5032-lab12.pages.dev) |
 
 The project uses Wrangler Direct Upload from GitHub Actions. It does not claim to use Cloudflare
 Git Integration.
